@@ -1,5 +1,5 @@
 #
-# PRJ tester.py
+# PRJ Parser - prj_parser.py
 #
 # author - Troy Hicks,  Nov 2018  troy.hicks@alaska.gov   
 #        - Jason Grimes, Feb 2019 jason@gina.alaska.edu
