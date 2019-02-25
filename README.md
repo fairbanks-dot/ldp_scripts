@@ -8,4 +8,4 @@ Basic workflow
 * **Evaluate Projections** (more python tools), view results in a GIS
 * **Define Zone extents** (draft polyline of where it works, will edit them together in the end.)
 
-[LDP Design Workflow doc](LDP Design Workflow v 1.docx)
+[LDP Design Workflow doc](https://github.com/fairbanks-dot/ldp_scripts/blob/master/LDP%20Design%20Workflow%20v%201.docx)
