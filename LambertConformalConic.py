@@ -3,7 +3,7 @@
 # LambertConformalConic.py
 # current author    - Troy Hicks,  Dec 2017 - Mar 2018  troy.hicks@alaska.gov
 #
-# last edit: Feb. 04, 2019
+# last edit: Mar. 03, 2019 (fixed double parallel)
 #
 # The purpose of this code is to perform Lambert Conformal Conic direct computations such that when provided
 # a geodetic position in decimal degrees to return a x,y (grid values), k (grid scale factor at a point),
@@ -14,14 +14,14 @@
 # where first efforts assumed single. But I notice that .prj often refers to single as a double
 # and just has both be the same value. I wanted to be able to compute on a real double so that
 # I could see what happens when someone misuses a single and accidentily enters it wrong in their
-# survey software.
+# survey software. I tested this with Leica Infinity, using various double parallels and matched results.
 #
 # To use this:
 # import LambertConformalConic as LCC
 # # get values for the variables needed by LCC, phi, phiO, phi1, phi2, lam, lamO, FN, FE, kO, a, inFl.
 # # can hard code them in or open a prj file and read them in.
 # # for a single parallel Lambert the phi1 and phi2 are the same
-# results = LCC.generic_LCC(phi, phiO, phi1, phi2, lam, lamO, FN, FE, kO, a, inFl)
+# results = LCC.compute_LCC(phi, phiO, phi1, phi2, lam, lamO, FN, FE, kO, a, inFl)
 #  # this will create a list [x,y,k,merCon]
 #
 # *********************************************************************************************
@@ -109,7 +109,7 @@ def geMeRaCu(phi, a, inFl):
 #
 # compute the 'map constants' first, m1, m2, tO, t1, t2, n, F, rhoO then,
 # compute the Phi specific m, t, rho, mercon, k, x, and y.
-# note that I had to multiply kO to both rho and rhoO, which is not shown in Snyder p.108
+# note that for single parallel case to multiply kO to both rho and rhoO, which is not shown in Snyder p.108
 
 
 # ****** Helper Methods ******
@@ -121,21 +121,26 @@ def helperLCC(phi, phiO, phi1, phi2, lam, lamO, kO, a, inFl): # returns rhoO, rh
     tO = np.tan(np.pi / 4 - phiO / 2) / ((1 - e * np.sin(phiO)) / (1 + e * np.sin(phiO))) ** (e / 2) 
     t1 = np.tan(np.pi / 4 - phi1 / 2) / ((1 - e * np.sin(phi1)) / (1 + e * np.sin(phi1))) ** (e / 2)
     t2 = np.tan(np.pi / 4 - phi2 / 2) / ((1 - e * np.sin(phi2)) / (1 + e * np.sin(phi2))) ** (e / 2)
-    if phi1 == phi2 :
-        n = np.sin(phiO)     # this works when phi0 is single parallel latitude.
-    else :
+    if phi1 == phi2 : # Single  Parallel case
+        n = np.sin(phiO)     
+        F = m1/(n * t1 ** n)
+        rhoO = a * F * kO * tO ** n   #kO added, not shown in Snyder p.108 (15-7a)
+    else : # Double parallel case
         n = (np.log(m1) - np.log(m2)) / (np.log(t1) - np.log(t2))
-    F = m1/(n * t1 ** n)
-    rhoO = a * F * kO * tO ** n   #kO added, not shown in Snyder p.108 (15-7a) 
+        F = m1/(n * t1 ** n)
+        rhoO = a * F * tO ** n
     # now calculate the specific for phi
     m = np.cos(phi) / (1 - fiEcSq(inFl) * np.sin(phi) ** 2) ** .5
     t = np.tan(np.pi / 4 - phi / 2) / ((1 - e * np.sin(phi)) / (1 + e * np.sin(phi))) ** (e / 2)
-    rho = a * F * kO * t ** n     #kO added, not shown in Snyder p.108 (15-7)
+    if phi1 == phi2 : # Single  Parallel case
+        rho = a * F * kO * t ** n     #kO added, not shown in Snyder p.108 (15-7)
+    else : # Double parallel case
+        rho = a * F * t ** n
     merCon = n* (lam - lamO)      # convergence angle
     k = rho * n / (a * m)
     return rhoO, rho, merCon, k
 
-def generic_LCC(phi, phiO, phi1, phi2, lam, lamO, FN, FE, kO, a, inFl):  #  requires decimal degree
+def compute_LCC(phi, phiO, phi1, phi2, lam, lamO, FN, FE, kO, a, inFl):  #  requires decimal degree
     phi = np.deg2rad(phi)
     phiO = np.deg2rad(phiO)
     phi1 = np.deg2rad(phi1)
