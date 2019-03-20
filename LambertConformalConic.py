@@ -3,37 +3,34 @@
 # LambertConformalConic.py
 # current author    - Troy Hicks,  Dec 2017 - Mar 2018  troy.hicks@alaska.gov
 #
-# last edit: Mar. 09, 2019 (fixed double parallel)
+# last edit: Mar. 03, 2019 (fixed double parallel)
 #
 # The purpose of this code is to perform Lambert Conformal Conic direct computations such that when provided
 # a geodetic position in decimal degrees to return a x,y (grid values), k (grid scale factor at a point),
 # and mercon (convergence angle). Angle is in radians. To go from grid values backward to geodetic requires an inverse
-# computation which is NOT included here.
+# computation. Not included here.
 #
 # This is a revision of past code, to allow for double parallel Lambert definitions
-# where first efforts assumed single. But I notice that .prj describes single parallel as a double
-# by having both be the same value. I wanted to be able to compute on a real double so that
+# where first efforts assumed single. But I notice that .prj often refers to single as a double
+# and just has both be the same value. I wanted to be able to compute on a real double so that
 # I could see what happens when someone misuses a single and accidentily enters it wrong in their
 # survey software. I tested this with Leica Infinity, using various double parallels and matched results.
 #
-
-
-# example:
+# To use this:
 # import LambertConformalConic as LCC
+# # get values for the variables needed by LCC, phi, phiO, phi1, phi2, lam, lamO, FN, FE, kO, a, inFl.
+# # can hard code them in or open a prj file and read them in.
+# # for a single parallel Lambert the phi1 and phi2 are the same
 # results = LCC.compute_LCC(phi, phiO, phi1, phi2, lam, lamO, FN, FE, kO, a, inFl)
 #  # this will create a list [x,y,k,merCon]
 #
 # *********************************************************************************************
 
-import numpy as np
-# This is importing numerical tools. numpy needs installed for this to work
-# most of the computations can be done without numpy, however numpy is significantly faster in many areas
-# therefore used in these scripts. Especially in scripts looking for optimized projection solutions.
+import numpy as np # this is importing numerical tools. numpy needs installed for this to work
 
-# ----------------------------------------------------------------------------------------------
-# ----------------------------------------------------------------------------------------------
-# Misc. Ellipsoid (datum) functions
-# or methods that might be needed, if these are not used they can be commented out
+# ----------------------------------------------------------
+# misc ellipsoid and other functions or methods that might be needed, if these are not used they should be removed
+# and maybe just added to a datum script
 
 #def min2Dec(deg,mi,se):
 #   h = np.sign(deg)
@@ -59,15 +56,15 @@ def fiEcSq(inFl):
 def seEcSq(inFl): 
    return fiEcSq(inFl)/ (1 - fiEcSq(inFl))
 
-# earth radius, 'a' is semi-major axis, for GRS-80 = 6378137 meters
+# earth radius (Rsube)
 #def eaRa(phi): 
-#   return a * (1 - np.sin(np.deg2rad(phi)) ** 2 / inFl)
+#   return seMaAx * (1 - np.sin(np.deg2rad(phi)) ** 2 / inFl)
 
-# meridian radius
+# meridian radius (Rsubm)
 def meRa(phi, a, inFl): 
     return a * (1 - fiEcSq(inFl)) / (1 - fiEcSq(inFl) * np.sin(np.deg2rad(phi)) ** 2) ** 1.5
 
-# prime vertical radius
+# prime vertical radius (Rsubn)
 def prVeRa(phi, a, inFl): 
     return a / np.sqrt(1 - fiEcSq(inFl) * np.sin(np.deg2rad(phi)) ** 2)
 
